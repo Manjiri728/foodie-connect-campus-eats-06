@@ -57,7 +57,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         title: "Login successful",
         description: `Welcome back, ${mockUser.name}!`,
       });
-      navigate('/dashboard');
+      
+      // Redirect staff users to staff dashboard
+      if (mockUser.role === 'staff') {
+        navigate('/staff');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (error) {
       toast({
         variant: "destructive",
@@ -90,7 +96,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         title: "Account created",
         description: "Your account has been created successfully.",
       });
-      navigate('/dashboard');
+      
+      // Redirect staff users to staff dashboard
+      if (mockUser.role === 'staff') {
+        navigate('/staff');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (error) {
       toast({
         variant: "destructive",

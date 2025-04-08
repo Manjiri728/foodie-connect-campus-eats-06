@@ -13,6 +13,7 @@ import Cart from "@/pages/Cart";
 import OrderTracking from "@/pages/OrderTracking";
 import Orders from "@/pages/Orders";
 import NotFound from "@/pages/NotFound";
+import StaffDashboard from "@/pages/StaffDashboard";
 
 // Create a new QueryClient instance outside of the component
 const queryClient = new QueryClient({
@@ -37,6 +38,7 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<Login />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/staff" element={<StaffDashboard />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/order-tracking" element={<OrderTracking />} />
                 <Route path="/orders" element={<Orders />} />

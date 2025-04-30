@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import { Clock, Check, ChefHat, Bell, ArrowLeft } from 'lucide-react';
+import { Clock, Check, ChefHat, Bell, ArrowLeft, CreditCard } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Order } from '@/types';
 
@@ -110,6 +110,28 @@ const OrderTracking: React.FC = () => {
             <div>
               <p className="text-sm font-medium">Estimated Pickup Time</p>
               <p className="text-xs text-gray-500">{order.timeSlot.time}</p>
+            </div>
+          </div>
+
+          {/* Payment information */}
+          <div className="mb-6 p-4 bg-green-50 rounded-lg border border-green-100">
+            <div className="flex items-center mb-2">
+              <CreditCard className="h-5 w-5 text-green-600 mr-2" />
+              <p className="text-sm font-medium">Payment Information</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <p className="text-gray-500">Method:</p>
+              <p className="font-medium capitalize">{order.paymentMethod}</p>
+              
+              <p className="text-gray-500">Status:</p>
+              <p className="font-medium text-green-600">Completed</p>
+              
+              {order.paymentMethod === 'upi' && order.upiDetails && (
+                <>
+                  <p className="text-gray-500">UPI Reference:</p>
+                  <p className="font-medium">{order.upiDetails.upiId || 'N/A'}</p>
+                </>
+              )}
             </div>
           </div>
 

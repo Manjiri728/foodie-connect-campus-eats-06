@@ -4,9 +4,10 @@ import { useCart } from '@/context/CartContext';
 import { PaymentMethod } from '@/types';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CreditCard, Wallet } from 'lucide-react';
+import UpiPayment from './UpiPayment';
 
 const PaymentOptions: React.FC = () => {
-  const { paymentMethod, selectPaymentMethod } = useCart();
+  const { paymentMethod, selectPaymentMethod, isUpiVerified } = useCart();
 
   // Sample payment options
   const paymentOptions = [
@@ -48,11 +49,22 @@ const PaymentOptions: React.FC = () => {
                     <div className="text-xs text-muted-foreground">{option.description}</div>
                   </div>
                 </div>
+                {option.id === 'upi' && paymentMethod === 'upi' && isUpiVerified && (
+                  <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                    Verified
+                  </span>
+                )}
               </label>
             </div>
           ))}
         </div>
       </RadioGroup>
+      
+      {paymentMethod === 'upi' && (
+        <div className="mt-6 border-t pt-6">
+          <UpiPayment />
+        </div>
+      )}
     </div>
   );
 };

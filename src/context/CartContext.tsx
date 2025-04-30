@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { CartItem, FoodItem, TimeSlot, PaymentMethod, Order } from '@/types';
+import { CartItem, FoodItem, TimeSlot, PaymentMethod, Order, UpiDetails } from '@/types';
 import { toast } from '@/hooks/use-toast';
 
 interface CartContextType {
@@ -17,6 +17,10 @@ interface CartContextType {
   selectPaymentMethod: (method: PaymentMethod) => void;
   placeOrder: () => Promise<Order | null>;
   currentOrder: Order | null;
+  upiDetails: UpiDetails | null;
+  setUpiDetails: (details: UpiDetails) => void;
+  isUpiVerified: boolean;
+  setIsUpiVerified: (verified: boolean) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -36,6 +40,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
+  const [upiDetails, setUpiDetails] = useState<UpiDetails | null>(null);
+  const [isUpiVerified, setIsUpiVerified] = useState(false);
 
   useEffect(() => {
     const savedCart = localStorage.getItem(CART_STORAGE_KEY);
@@ -46,6 +52,21 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Error parsing saved cart:', e);
       }
     }
+    
+    // Check if UPI payment was verified
+    const upiVerified = localStorage.getItem('upi_payment_verified') === 'true';
+    setIsUpiVerified(upiVerified);
+    
+    // Listen for UPI payment verification events
+    const handleUpiVerified = () => {
+      setIsUpiVerified(true);
+    };
+    
+    window.addEventListener('upi-payment-verified', handleUpiVerified);
+    
+    return () => {
+      window.removeEventListener('upi-payment-verified', handleUpiVerified);
+    };
   }, []);
 
   useEffect(() => {
@@ -101,6 +122,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setItems([]);
     setSelectedTimeSlot(null);
     setPaymentMethod(null);
+    setIsUpiVerified(false);
+    localStorage.removeItem('upi_payment_verified');
   };
 
   const selectTimeSlot = (slot: TimeSlot) => {
@@ -109,6 +132,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const selectPaymentMethod = (method: PaymentMethod) => {
     setPaymentMethod(method);
+    
+    // Reset UPI verification when switching payment methods
+    if (method !== 'upi') {
+      setIsUpiVerified(false);
+      localStorage.removeItem('upi_payment_verified');
+    }
   };
 
   const placeOrder = async (): Promise<Order | null> => {
@@ -139,6 +168,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return null;
     }
     
+    // Check if UPI payment is verified when UPI is selected
+    if (paymentMethod === 'upi' && !isUpiVerified) {
+      toast({
+        variant: "destructive",
+        title: "UPI payment not verified",
+        description: "Please complete the UPI payment and verify it.",
+      });
+      return null;
+    }
+    
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -152,6 +191,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         timeSlot: selectedTimeSlot,
         paymentMethod,
         createdAt: new Date().toISOString(),
+        date: new Date().toISOString(),
+        upiDetails: paymentMethod === 'upi' ? upiDetails : undefined,
+        paymentStatus: 'completed',
       };
       
       setCurrentOrder(newOrder);
@@ -191,7 +233,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       paymentMethod,
       selectPaymentMethod,
       placeOrder,
-      currentOrder
+      currentOrder,
+      upiDetails,
+      setUpiDetails,
+      isUpiVerified,
+      setIsUpiVerified
     }}>
       {children}
     </CartContext.Provider>

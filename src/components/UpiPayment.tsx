@@ -1,13 +1,11 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, QrCode, IndianRupee } from 'lucide-react';
+import { Loader2, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
 
 // Your specific UPI ID
 const UPI_ID = "manjirinandeshwar728@okhdfcbank"; 
@@ -18,7 +16,7 @@ const UpiPayment: React.FC = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   
-  // QR code image path
+  // QR code image path (corrected to use public folder)
   const qrCodeImage = "/upi-qr-code.png"; 
 
   const handleVerifyPayment = async () => {

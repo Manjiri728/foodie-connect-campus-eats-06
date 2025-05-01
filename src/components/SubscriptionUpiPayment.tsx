@@ -9,7 +9,8 @@ import { StaffSubscriptionType } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from '@/integrations/supabase/client';
 
-const UPI_ID = "manjirinandeshwar728@okhdfcbank"; // Your specific UPI ID
+// Your specific UPI ID
+const UPI_ID = "manjirinandeshwar728@okhdfcbank"; 
 
 interface SubscriptionUpiPaymentProps {
   planId: StaffSubscriptionType;
@@ -27,7 +28,7 @@ const SubscriptionUpiPayment: React.FC<SubscriptionUpiPaymentProps> = ({
   const [activeTab, setActiveTab] = useState('scan');
   const [copySuccess, setCopySuccess] = useState(false);
   
-  // QR code image (using the one you provided)
+  // QR code image path (corrected to use public folder)
   const qrCodeImage = "/upi-qr-code.png";
 
   const handleVerifyPayment = async () => {
@@ -93,7 +94,7 @@ const SubscriptionUpiPayment: React.FC<SubscriptionUpiPaymentProps> = ({
       }
       
       // Also keep local storage for immediate UI updates
-      localStorage.setItem('canteen_staff_subscription', 'true');
+      localStorage.setItem('canteen_subscription', 'true');
       localStorage.setItem('staff_subscription_details', JSON.stringify({
         id: `sub-${Date.now()}`,
         type: planId,

@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, QrCode } from 'lucide-react';
+import { Loader2, QrCode, CreditCard } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { StaffSubscriptionType } from '@/types';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const UPI_ID = "manjirinandeshwar728@okhdfcbank"; // Your specific UPI ID
 
@@ -24,6 +25,7 @@ const SubscriptionUpiPayment: React.FC<SubscriptionUpiPaymentProps> = ({
 }) => {
   const [utrReference, setUtrReference] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
+  const [activeTab, setActiveTab] = useState('scan');
   const navigate = useNavigate();
 
   const handleVerifyPayment = () => {
@@ -83,23 +85,100 @@ const SubscriptionUpiPayment: React.FC<SubscriptionUpiPaymentProps> = ({
 
   // Generate a QR code URL
   const qrCodeUrl = `https://chart.googleapis.com/chart?cht=qr&chl=upi://pay?pa=${UPI_ID}&pn=CanteenConnect&am=${planPrice.toFixed(2)}&cu=INR&tn=Subscription%20Payment&size=150x150`;
+  
+  // Generate direct payment links for popular UPI apps
+  const googlePayLink = `upi://pay?pa=${UPI_ID}&pn=CanteenConnect&am=${planPrice.toFixed(2)}&cu=INR&tn=Subscription%20Payment`;
+  const phonepeLink = `phonepe://pay?pa=${UPI_ID}&pn=CanteenConnect&am=${planPrice.toFixed(2)}&cu=INR&tn=Subscription%20Payment`;
+  const paytmLink = `paytmmp://pay?pa=${UPI_ID}&pn=CanteenConnect&am=${planPrice.toFixed(2)}&cu=INR&tn=Subscription%20Payment`;
+  
+  // Detect mobile device
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg p-4 border border-gray-200">
-        <div className="flex flex-col items-center justify-center space-y-4">
-          <Badge className="mb-2">Pay ₹{planPrice.toFixed(2)}</Badge>
-          <img 
-            src={qrCodeUrl} 
-            alt="UPI Payment QR Code" 
-            className="w-48 h-48 border rounded-lg"
-          />
-          <div className="text-center">
-            <p className="text-sm font-medium">Scan with any UPI app</p>
-            <p className="text-xs text-gray-500">PhonePe, Google Pay, Paytm, etc.</p>
+      <Tabs defaultValue="scan" onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid grid-cols-2 mb-4">
+          <TabsTrigger value="scan">Scan QR</TabsTrigger>
+          <TabsTrigger value="direct">Direct Payment</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="scan">
+          <div className="bg-white rounded-lg p-4 border border-gray-200">
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <Badge className="mb-2">Pay ₹{planPrice.toFixed(2)}</Badge>
+              <img 
+                src={qrCodeUrl} 
+                alt="UPI Payment QR Code" 
+                className="w-48 h-48 border rounded-lg"
+              />
+              <div className="text-center">
+                <p className="text-sm font-medium">Scan with any UPI app</p>
+                <p className="text-xs text-gray-500">PhonePe, Google Pay, Paytm, etc.</p>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </TabsContent>
+        
+        <TabsContent value="direct">
+          <div className="bg-white rounded-lg p-4 border border-gray-200">
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <Badge className="mb-2">Pay ₹{planPrice.toFixed(2)}</Badge>
+              <CreditCard className="w-12 h-12 text-gray-400 mb-2" />
+              <div className="text-center mb-4">
+                <p className="text-sm font-medium">Choose your UPI app</p>
+                <p className="text-xs text-gray-500">Click an app to make direct payment</p>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-4 w-full">
+                <Button
+                  variant="outline"
+                  className="flex flex-col h-auto py-3"
+                  onClick={() => window.location.href = googlePayLink}
+                >
+                  <img 
+                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Google_Pay_Logo_%282020%29.svg/512px-Google_Pay_Logo_%282020%29.svg.png" 
+                    alt="Google Pay" 
+                    className="h-8 mb-2" 
+                  />
+                  <span className="text-xs">Google Pay</span>
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="flex flex-col h-auto py-3"
+                  onClick={() => window.location.href = phonepeLink}
+                >
+                  <img 
+                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/PhonePe_Logo.svg/512px-PhonePe_Logo.svg.png" 
+                    alt="PhonePe" 
+                    className="h-8 mb-2" 
+                  />
+                  <span className="text-xs">PhonePe</span>
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="flex flex-col h-auto py-3"
+                  onClick={() => window.location.href = paytmLink}
+                >
+                  <img 
+                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Paytm_Logo_%282019%29.svg/512px-Paytm_Logo_%282019%29.svg.png" 
+                    alt="Paytm" 
+                    className="h-8 mb-2" 
+                  />
+                  <span className="text-xs">Paytm</span>
+                </Button>
+              </div>
+              
+              {!isMobile && (
+                <p className="text-xs text-orange-500 mt-2">
+                  You appear to be on a desktop. Direct payment links work best on mobile devices.
+                </p>
+              )}
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       <div className="bg-white rounded-lg p-4 border border-gray-200">
         <h3 className="font-medium mb-2">UPI Payment Details</h3>

@@ -41,6 +41,8 @@ export type Order = {
   userId: string;
   date: string;
   items: CartItem[];
+  subtotal: number;
+  serviceFee: number;
   total: number;
   status: 'placed' | 'preparing' | 'ready' | 'completed';
   timeSlot: TimeSlot;

@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,9 +12,10 @@ import { Badge } from '@/components/ui/badge';
 const UPI_ID = "manjirinandeshwar728@okhdfcbank"; // Your specific UPI ID
 
 const UpiPayment: React.FC = () => {
-  const { subtotal } = useCart();
+  const { subtotal, hasSubscription } = useCart();
   const [utrReference, setUtrReference] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
+  const navigate = useNavigate();
 
   const handleVerifyPayment = () => {
     if (!utrReference.trim()) {
@@ -115,6 +117,23 @@ const UpiPayment: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {!hasSubscription && (
+        <div className="bg-orange-50 rounded-lg p-4 border border-orange-100">
+          <h4 className="text-sm font-medium mb-2">Save on Service Fees!</h4>
+          <p className="text-xs text-gray-600 mb-3">
+            Subscribe to our monthly plan and get service fees waived on all your orders.
+          </p>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full text-xs"
+            onClick={() => navigate('/subscription')}
+          >
+            View Subscription Plans
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

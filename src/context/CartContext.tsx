@@ -11,6 +11,8 @@ interface CartContextType {
   clearCart: () => void;
   totalItems: number;
   subtotal: number;
+  serviceFee: number;
+  total: number;
   selectedTimeSlot: TimeSlot | null;
   selectTimeSlot: (slot: TimeSlot) => void;
   paymentMethod: PaymentMethod | null;
@@ -21,6 +23,8 @@ interface CartContextType {
   setUpiDetails: (details: UpiDetails) => void;
   isUpiVerified: boolean;
   setIsUpiVerified: (verified: boolean) => void;
+  hasSubscription: boolean;
+  setHasSubscription: (hasSubscription: boolean) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -34,6 +38,7 @@ export const useCart = () => {
 };
 
 const CART_STORAGE_KEY = 'canteen-connect-cart';
+const SERVICE_FEE_PERCENTAGE = 5; // 5% service fee
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -42,7 +47,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
   const [upiDetails, setUpiDetails] = useState<UpiDetails | null>(null);
   const [isUpiVerified, setIsUpiVerified] = useState(false);
+  const [hasSubscription, setHasSubscription] = useState(false);
 
+  // Load cart from localStorage
   useEffect(() => {
     const savedCart = localStorage.getItem(CART_STORAGE_KEY);
     if (savedCart) {
@@ -56,6 +63,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check if UPI payment was verified
     const upiVerified = localStorage.getItem('upi_payment_verified') === 'true';
     setIsUpiVerified(upiVerified);
+    
+    // Check if user has subscription
+    const subscribed = localStorage.getItem('canteen_subscription') === 'true';
+    setHasSubscription(subscribed);
     
     // Listen for UPI payment verification events
     const handleUpiVerified = () => {
@@ -186,7 +197,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         id: `ORDER-${Math.floor(Math.random() * 10000)}`,
         userId: '1', // In a real app, this would come from the auth context
         items: [...items],
-        total: subtotal,
+        total: total,
+        subtotal: subtotal,
+        serviceFee: serviceFee,
         status: 'placed',
         timeSlot: selectedTimeSlot,
         paymentMethod,
@@ -218,6 +231,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const serviceFee = hasSubscription ? 0 : (subtotal * SERVICE_FEE_PERCENTAGE) / 100;
+  const total = subtotal + serviceFee;
 
   return (
     <CartContext.Provider value={{
@@ -228,6 +243,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       clearCart,
       totalItems,
       subtotal,
+      serviceFee,
+      total,
       selectedTimeSlot,
       selectTimeSlot,
       paymentMethod,
@@ -237,7 +254,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       upiDetails,
       setUpiDetails,
       isUpiVerified,
-      setIsUpiVerified
+      setIsUpiVerified,
+      hasSubscription,
+      setHasSubscription
     }}>
       {children}
     </CartContext.Provider>

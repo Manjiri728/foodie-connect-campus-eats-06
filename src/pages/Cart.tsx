@@ -17,7 +17,16 @@ import { Separator } from '@/components/ui/separator';
 import { ShoppingBag, ArrowLeft, ShoppingCart } from 'lucide-react';
 
 const Cart: React.FC = () => {
-  const { items, subtotal, placeOrder, selectedTimeSlot, paymentMethod } = useCart();
+  const { 
+    items, 
+    subtotal, 
+    serviceFee, 
+    total, 
+    placeOrder, 
+    selectedTimeSlot, 
+    paymentMethod,
+    hasSubscription 
+  } = useCart();
   const navigate = useNavigate();
 
   const handlePlaceOrder = async () => {
@@ -104,16 +113,23 @@ const Cart: React.FC = () => {
                   <span>₹{subtotal.toFixed(2)}</span>
                 </div>
 
-                <div className="flex justify-between text-sm text-gray-500">
-                  <span>Service Fee</span>
-                  <span>₹0.00</span>
+                <div className="flex justify-between text-sm">
+                  <div className="flex items-center">
+                    <span className="text-gray-500">Service Fee (5%)</span>
+                    {hasSubscription && (
+                      <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                        Waived with Subscription
+                      </span>
+                    )}
+                  </div>
+                  <span>₹{serviceFee.toFixed(2)}</span>
                 </div>
 
                 <Separator />
 
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>
-                  <span>₹{subtotal.toFixed(2)}</span>
+                  <span>₹{total.toFixed(2)}</span>
                 </div>
               </div>
             </CardContent>
@@ -130,6 +146,23 @@ const Cart: React.FC = () => {
               </Button>
             </CardFooter>
           </Card>
+
+          {!hasSubscription && (
+            <div className="mt-4 p-4 bg-orange-50 border border-orange-100 rounded-lg">
+              <h3 className="text-sm font-medium mb-2">Save on Service Fees!</h3>
+              <p className="text-xs text-gray-600 mb-3">
+                Subscribe to our monthly plan and get service fees waived on all your orders.
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full text-xs"
+                onClick={() => navigate('/subscription')}
+              >
+                View Subscription Plans
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>

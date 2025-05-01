@@ -150,6 +150,18 @@ const OrderTracking: React.FC = () => {
 
               <Separator className="my-2" />
 
+              <div className="flex justify-between font-medium">
+                <span>Subtotal</span>
+                <span>₹{order.subtotal.toFixed(2)}</span>
+              </div>
+
+              <div className="flex justify-between text-sm text-gray-500">
+                <span>Service Fee</span>
+                <span>₹{order.serviceFee.toFixed(2)}</span>
+              </div>
+
+              <Separator className="my-2" />
+
               <div className="flex justify-between font-bold">
                 <span>Total</span>
                 <span>₹{order.total.toFixed(2)}</span>

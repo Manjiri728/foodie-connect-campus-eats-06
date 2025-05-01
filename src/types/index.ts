@@ -51,3 +51,13 @@ export type Order = {
   upiDetails?: UpiDetails;
   paymentStatus?: 'pending' | 'completed' | 'failed';
 };
+
+export type StaffSubscriptionType = 'monthly' | 'quarterly' | 'yearly';
+
+export type StaffSubscription = {
+  id: string;
+  type: StaffSubscriptionType;
+  startDate: string;
+  endDate: string;
+  active: boolean;
+};

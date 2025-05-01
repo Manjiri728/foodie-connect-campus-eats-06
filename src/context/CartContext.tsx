@@ -64,7 +64,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const upiVerified = localStorage.getItem('upi_payment_verified') === 'true';
     setIsUpiVerified(upiVerified);
     
-    // Check if user has subscription
+    // Check if user has subscription (for students - service fee waiver)
     const subscribed = localStorage.getItem('canteen_subscription') === 'true';
     setHasSubscription(subscribed);
     

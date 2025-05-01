@@ -40,6 +40,8 @@ const mockOrders: Order[] = [
     date: "2023-04-08T11:30:00Z",
     status: 'placed',
     total: 175,
+    subtotal: 165,
+    serviceFee: 10,
     items: [
       { id: '1', name: 'Tea', quantity: 2, price: 15, description: 'Masala tea', image: '/placeholder.svg', category: 'beverages', isAvailable: true },
       { id: '4', name: 'Idli', quantity: 1, price: 30, description: 'South Indian steamed rice cake', image: '/placeholder.svg', category: 'breakfast', isAvailable: true },
@@ -54,6 +56,8 @@ const mockOrders: Order[] = [
     date: "2023-04-08T11:35:00Z",
     status: 'preparing',
     total: 120,
+    subtotal: 115,
+    serviceFee: 5,
     items: [
       { id: '7', name: 'Dosa', quantity: 1, price: 50, description: 'South Indian crepe', image: '/placeholder.svg', category: 'breakfast', isAvailable: true },
       { id: '3', name: 'Cold Coffee', quantity: 1, price: 40, description: 'Iced coffee with cream', image: '/placeholder.svg', category: 'beverages', isAvailable: true },
@@ -68,6 +72,8 @@ const mockOrders: Order[] = [
     date: "2023-04-08T11:40:00Z",
     status: 'ready',
     total: 80,
+    subtotal: 76,
+    serviceFee: 4,
     items: [
       { id: '5', name: 'Thali', quantity: 1, price: 80, description: 'Complete Indian meal', image: '/placeholder.svg', category: 'meals', isAvailable: true },
     ],

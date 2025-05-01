@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { 
   Card,
@@ -19,66 +19,74 @@ const subscriptionPlans = [
   {
     id: 'monthly',
     name: 'Monthly Plan',
-    price: 99,
+    price: 999,
     period: 'month',
     features: [
-      'No service fees on all orders',
-      'Priority order processing',
-      'Access to exclusive menu items',
-      'Early access to special event bookings'
+      'Full access to order management system',
+      'Up to 100 orders per day',
+      'Basic analytics',
+      'Email support'
     ]
   },
   {
-    id: 'semester',
-    name: 'Semester Plan',
-    price: 499,
-    period: '6 months',
+    id: 'quarterly',
+    name: 'Quarterly Plan',
+    price: 2499,
+    period: '3 months',
     features: [
-      'No service fees on all orders',
-      'Priority order processing',
-      'Access to exclusive menu items',
-      'Early access to special event bookings',
-      '10% discount on orders above ₹200'
+      'Full access to order management system',
+      'Unlimited orders per day',
+      'Advanced analytics and reporting',
+      'Priority email and phone support',
+      '24/7 technical assistance'
     ],
     popular: true
   },
   {
     id: 'yearly',
     name: 'Annual Plan',
-    price: 899,
+    price: 8999,
     period: 'year',
     features: [
-      'No service fees on all orders',
-      'Priority order processing',
-      'Access to exclusive menu items',
-      'Early access to special event bookings',
-      '10% discount on all orders',
-      'Free item on your birthday'
+      'Full access to order management system',
+      'Unlimited orders per day',
+      'Advanced analytics and reporting',
+      'Priority email and phone support',
+      '24/7 technical assistance',
+      'Custom menu management features',
+      'Staff training sessions'
     ]
   }
 ];
 
 const Subscription: React.FC = () => {
   const navigate = useNavigate();
-  const { hasSubscription, setHasSubscription } = useCart();
+  const { user } = useAuth();
+  const [hasSubscription, setHasSubscription] = React.useState(false);
+  
+  // Check if the canteen has an active subscription
+  React.useEffect(() => {
+    const subscribed = localStorage.getItem('canteen_staff_subscription') === 'true';
+    setHasSubscription(subscribed);
+  }, []);
 
   const handleSubscribe = (planId: string) => {
     // In a real app, this would initiate a payment flow for subscription
     // For demonstration purposes, we'll just set the subscription state to true
-    localStorage.setItem('canteen_subscription', 'true');
+    localStorage.setItem('canteen_staff_subscription', 'true');
     setHasSubscription(true);
     
     toast({
       title: "Subscription activated!",
-      description: "You've successfully subscribed to the canteen service.",
+      description: "Your canteen has successfully subscribed to our platform.",
     });
     
-    navigate('/dashboard');
+    navigate('/staff');
   };
 
   const handleCancelSubscription = () => {
     // In a real app, this would communicate with your payment processor to cancel
-    localStorage.removeItem('canteen_subscription');
+    localStorage.removeItem('canteen_staff_subscription');
     setHasSubscription(false);
     
     toast({
@@ -87,20 +95,32 @@ const Subscription: React.FC = () => {
     });
   };
 
+  // Only staff members should access this page
+  React.useEffect(() => {
+    if (user && user.role !== 'staff') {
+      navigate('/dashboard');
+      toast({
+        variant: "destructive",
+        title: "Access denied",
+        description: "This page is only available for canteen staff.",
+      });
+    }
+  }, [user, navigate]);
+
   return (
     <div className="container max-w-6xl mx-auto px-4 py-6">
       <div className="flex justify-start mb-6">
-        <Button variant="ghost" onClick={() => navigate('/dashboard')}>
+        <Button variant="ghost" onClick={() => navigate('/staff')}>
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Menu
+          Back to Dashboard
         </Button>
       </div>
 
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold mb-2">Canteen Connect Subscription</h1>
+        <h1 className="text-2xl font-bold mb-2">Canteen Management Platform Subscription</h1>
         <p className="text-gray-500 max-w-2xl mx-auto">
-          Subscribe to our service and enjoy benefits like no service fees, 
-          priority processing, and exclusive menu items.
+          Subscribe to our platform and enjoy benefits like unlimited orders, advanced analytics, 
+          and premium support for your canteen business.
         </p>
       </div>
 
@@ -109,9 +129,9 @@ const Subscription: React.FC = () => {
           <div className="mb-4 mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
             <Check className="h-8 w-8 text-green-600" />
           </div>
-          <h2 className="text-xl font-semibold mb-2">You're Subscribed!</h2>
+          <h2 className="text-xl font-semibold mb-2">Active Subscription</h2>
           <p className="text-gray-600 mb-4">
-            You're currently enjoying all the benefits of our subscription service.
+            Your canteen is currently subscribed to our platform. You have full access to all features.
           </p>
           <Button 
             variant="outline" 
@@ -138,7 +158,7 @@ const Subscription: React.FC = () => {
               
               <CardHeader>
                 <CardTitle>{plan.name}</CardTitle>
-                <CardDescription>Perfect for regular canteen users</CardDescription>
+                <CardDescription>For canteen business management</CardDescription>
                 <div className="mt-2">
                   <span className="text-3xl font-bold">₹{plan.price}</span>
                   <span className="text-gray-500">/{plan.period}</span>
@@ -172,7 +192,7 @@ const Subscription: React.FC = () => {
       <div className="max-w-2xl mx-auto mt-12 text-center text-sm text-gray-500">
         <p>
           Subscription automatically renews at the end of your billing period unless cancelled. 
-          You can cancel anytime. For institutional subscriptions or group plans, please contact our admin.
+          You can cancel anytime. For multi-branch subscriptions or custom plans, please contact our sales team.
         </p>
       </div>
     </div>

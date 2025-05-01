@@ -16,8 +16,9 @@ const UpiPayment: React.FC = () => {
   const { subtotal, hasSubscription, setUpiDetails, setIsUpiVerified } = useCart();
   const [utrReference, setUtrReference] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
   
-  // QR code image (using the one you provided)
+  // QR code image path
   const qrCodeImage = "/upi-qr-code.png"; 
 
   const handleVerifyPayment = async () => {
@@ -33,25 +34,8 @@ const UpiPayment: React.FC = () => {
     setIsVerifying(true);
     
     try {
-      // Here we would verify with Supabase in a production app
-      // For now, we'll simulate verification success
-      
-      // Store payment reference in Supabase
-      const { error } = await supabase
-        .from('payment_verifications')
-        .insert({
-          reference_id: utrReference,
-          amount: subtotal,
-          payment_method: 'upi',
-          status: 'verified',
-          created_at: new Date().toISOString()
-        });
-      
-      if (error) {
-        throw new Error(error.message);
-      }
-      
-      // Update local state
+      // Simulating verification success since we can't actually verify payments
+      // Just store details in localStorage
       setUpiDetails({
         upiId: UPI_ID,
         referenceId: utrReference,
@@ -82,10 +66,25 @@ const UpiPayment: React.FC = () => {
     }
   };
 
+  // Copy UPI ID to clipboard
+  const handleCopyUpiId = () => {
+    navigator.clipboard.writeText(UPI_ID).then(() => {
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+      toast({
+        title: "UPI ID copied",
+        description: "UPI ID copied to clipboard!",
+      });
+    });
+  };
+
   // Generate direct payment links for popular UPI apps
   const googlePayLink = `upi://pay?pa=${UPI_ID}&pn=CanteenConnect&am=${subtotal.toFixed(2)}&cu=INR&tn=Food%20Order%20Payment`;
   const phonepeLink = `phonepe://pay?pa=${UPI_ID}&pn=CanteenConnect&am=${subtotal.toFixed(2)}&cu=INR&tn=Food%20Order%20Payment`;
   const paytmLink = `paytmmp://pay?pa=${UPI_ID}&pn=CanteenConnect&am=${subtotal.toFixed(2)}&cu=INR&tn=Food%20Order%20Payment`;
+
+  // Detect if user is on mobile
+  const isMobile = typeof navigator !== 'undefined' ? /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) : false;
 
   return (
     <div className="space-y-6">
@@ -107,9 +106,26 @@ const UpiPayment: React.FC = () => {
       <div className="bg-white rounded-lg p-4 border border-gray-200">
         <h3 className="font-medium mb-2">UPI Payment Details</h3>
         <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
+          <div className="flex justify-between items-center">
             <span className="text-gray-500">UPI ID:</span>
-            <span className="font-medium">{UPI_ID}</span>
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{UPI_ID}</span>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-6 w-6 p-0" 
+                onClick={handleCopyUpiId}
+              >
+                <span className="sr-only">Copy</span>
+                {copySuccess ? (
+                  <Check className="h-3 w-3" />
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                )}
+              </Button>
+            </div>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500">Amount:</span>
@@ -118,46 +134,48 @@ const UpiPayment: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
-        <Button
-          variant="outline"
-          className="flex flex-col h-auto py-3"
-          onClick={() => window.location.href = googlePayLink}
-        >
-          <img 
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Google_Pay_Logo_%282020%29.svg/512px-Google_Pay_Logo_%282020%29.svg.png" 
-            alt="Google Pay" 
-            className="h-6 mb-1" 
-          />
-          <span className="text-xs">Google Pay</span>
-        </Button>
-        
-        <Button
-          variant="outline"
-          className="flex flex-col h-auto py-3"
-          onClick={() => window.location.href = phonepeLink}
-        >
-          <img 
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/PhonePe_Logo.svg/512px-PhonePe_Logo.svg.png" 
-            alt="PhonePe" 
-            className="h-6 mb-1" 
-          />
-          <span className="text-xs">PhonePe</span>
-        </Button>
-        
-        <Button
-          variant="outline"
-          className="flex flex-col h-auto py-3"
-          onClick={() => window.location.href = paytmLink}
-        >
-          <img 
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Paytm_Logo_%282019%29.svg/512px-Paytm_Logo_%282019%29.svg.png" 
-            alt="Paytm" 
-            className="h-6 mb-1" 
-          />
-          <span className="text-xs">Paytm</span>
-        </Button>
-      </div>
+      {isMobile && (
+        <div className="grid grid-cols-3 gap-3">
+          <Button
+            variant="outline"
+            className="flex flex-col h-auto py-3"
+            onClick={() => window.location.href = googlePayLink}
+          >
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Google_Pay_Logo_%282020%29.svg/512px-Google_Pay_Logo_%282020%29.svg.png" 
+              alt="Google Pay" 
+              className="h-6 mb-1" 
+            />
+            <span className="text-xs">Google Pay</span>
+          </Button>
+          
+          <Button
+            variant="outline"
+            className="flex flex-col h-auto py-3"
+            onClick={() => window.location.href = phonepeLink}
+          >
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/PhonePe_Logo.svg/512px-PhonePe_Logo.svg.png" 
+              alt="PhonePe" 
+              className="h-6 mb-1" 
+            />
+            <span className="text-xs">PhonePe</span>
+          </Button>
+          
+          <Button
+            variant="outline"
+            className="flex flex-col h-auto py-3"
+            onClick={() => window.location.href = paytmLink}
+          >
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Paytm_Logo_%282019%29.svg/512px-Paytm_Logo_%282019%29.svg.png" 
+              alt="Paytm" 
+              className="h-6 mb-1" 
+            />
+            <span className="text-xs">Paytm</span>
+          </Button>
+        </div>
+      )}
 
       <div className="bg-white rounded-lg p-4 border border-gray-200">
         <div className="space-y-4">

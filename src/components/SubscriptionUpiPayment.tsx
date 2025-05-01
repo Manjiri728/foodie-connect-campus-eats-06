@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, CreditCard, IndianRupee } from 'lucide-react';
+import { Loader2, CreditCard, IndianRupee, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { StaffSubscriptionType } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,6 +25,7 @@ const SubscriptionUpiPayment: React.FC<SubscriptionUpiPaymentProps> = ({
   const [utrReference, setUtrReference] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [activeTab, setActiveTab] = useState('scan');
+  const [copySuccess, setCopySuccess] = useState(false);
   
   // QR code image (using the one you provided)
   const qrCodeImage = "/upi-qr-code.png";
@@ -128,6 +129,18 @@ const SubscriptionUpiPayment: React.FC<SubscriptionUpiPaymentProps> = ({
   // Detect mobile device
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
+  // Copy UPI ID to clipboard
+  const handleCopyUpiId = () => {
+    navigator.clipboard.writeText(UPI_ID).then(() => {
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+      toast({
+        title: "UPI ID copied",
+        description: "UPI ID copied to clipboard!",
+      });
+    });
+  };
+
   return (
     <div className="space-y-6">
       <Tabs defaultValue="scan" onValueChange={setActiveTab} className="w-full">
@@ -217,9 +230,26 @@ const SubscriptionUpiPayment: React.FC<SubscriptionUpiPaymentProps> = ({
       <div className="bg-white rounded-lg p-4 border border-gray-200">
         <h3 className="font-medium mb-2">UPI Payment Details</h3>
         <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
+          <div className="flex justify-between items-center">
             <span className="text-gray-500">UPI ID:</span>
-            <span className="font-medium">{UPI_ID}</span>
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{UPI_ID}</span>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-6 w-6 p-0" 
+                onClick={handleCopyUpiId}
+              >
+                <span className="sr-only">Copy</span>
+                {copySuccess ? (
+                  <Check className="h-3 w-3" />
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                )}
+              </Button>
+            </div>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500">Amount:</span>

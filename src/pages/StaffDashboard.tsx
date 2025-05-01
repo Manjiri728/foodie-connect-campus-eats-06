@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -28,7 +28,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Search, Plus, Coffee, PieChart } from 'lucide-react';
+import { Search, Plus, Coffee, PieChart, BadgeDollarSign } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Order, FoodItem } from '@/types';
 
@@ -101,6 +101,13 @@ const StaffDashboard: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>(mockOrders);
   const [menuItems, setMenuItems] = useState<FoodItem[]>(mockMenuItems);
   const [searchTerm, setSearchTerm] = useState('');
+  const [hasSubscription, setHasSubscription] = useState(false);
+
+  // Check if staff has subscription
+  useEffect(() => {
+    const staffSubscription = localStorage.getItem('canteen_staff_subscription') === 'true';
+    setHasSubscription(staffSubscription);
+  }, []);
 
   // Redirect non-staff users
   React.useEffect(() => {
@@ -167,14 +174,27 @@ const StaffDashboard: React.FC = () => {
     item.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Calculate total platform fees
+  const totalPlatformFees = orders.reduce((sum, order) => sum + order.serviceFee, 0);
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold">Canteen Management</h1>
           <p className="text-gray-500">Manage orders and menu items</p>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-3 mt-4 md:mt-0">
+          {!hasSubscription && (
+            <Button 
+              variant="outline" 
+              className="flex items-center"
+              onClick={() => navigate('/subscription')}
+            >
+              <BadgeDollarSign className="mr-2 h-4 w-4" />
+              Subscribe Now
+            </Button>
+          )}
           <div className="flex items-center bg-white rounded-md border px-3 py-2 w-64">
             <Search className="w-4 h-4 text-gray-400 mr-2" />
             <Input 
@@ -187,6 +207,23 @@ const StaffDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {!hasSubscription && (
+        <div className="mb-6 p-4 bg-orange-50 border border-orange-100 rounded-lg">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
+            <div>
+              <h2 className="text-lg font-medium mb-1">Upgrade Your Canteen Experience</h2>
+              <p className="text-sm text-gray-600">Subscribe to CanteenConnect to get rid of service fees and access premium features.</p>
+            </div>
+            <Button 
+              className="mt-3 md:mt-0"
+              onClick={() => navigate('/subscription')}
+            >
+              View Plans
+            </Button>
+          </div>
+        </div>
+      )}
 
       <Tabs defaultValue="orders" className="space-y-4">
         <TabsList>
@@ -209,6 +246,8 @@ const StaffDashboard: React.FC = () => {
                   <TableRow>
                     <TableHead>Order ID</TableHead>
                     <TableHead>Items</TableHead>
+                    <TableHead>Subtotal</TableHead>
+                    <TableHead>Service Fee</TableHead>
                     <TableHead>Total</TableHead>
                     <TableHead>Time Slot</TableHead>
                     <TableHead>Status</TableHead>
@@ -228,6 +267,8 @@ const StaffDashboard: React.FC = () => {
                           ))}
                         </div>
                       </TableCell>
+                      <TableCell>₹{order.subtotal}</TableCell>
+                      <TableCell>₹{order.serviceFee}</TableCell>
                       <TableCell>₹{order.total}</TableCell>
                       <TableCell>{order.timeSlot.time}</TableCell>
                       <TableCell>
@@ -258,13 +299,20 @@ const StaffDashboard: React.FC = () => {
                   ))}
                   {filteredOrders.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-6 text-gray-500">
+                      <TableCell colSpan={8} className="text-center py-6 text-gray-500">
                         No orders found
                       </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               </Table>
+              
+              <div className="mt-4 p-4 bg-gray-50 rounded border">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Total Platform Fees:</span>
+                  <span className="font-bold">₹{totalPlatformFees.toFixed(2)}</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -357,33 +405,18 @@ const StaffDashboard: React.FC = () => {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Popular Item
+                  Platform Fees Collected
                 </CardTitle>
-                <Coffee className="h-4 w-4 text-muted-foreground" />
+                <BadgeDollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">Masala Dosa</div>
+                <div className="text-2xl font-bold">₹{totalPlatformFees.toFixed(2)}</div>
                 <p className="text-xs text-muted-foreground">
-                  Ordered 24 times today
+                  From {orders.length} orders
                 </p>
               </CardContent>
             </Card>
           </div>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Advanced Analytics</CardTitle>
-              <CardDescription>
-                More detailed analytics will be available soon
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="h-80 flex items-center justify-center">
-              <div className="text-center text-gray-500">
-                <PieChart className="h-16 w-16 mx-auto mb-4 opacity-30" />
-                <p>Analytics dashboard coming soon</p>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
       </Tabs>
     </div>

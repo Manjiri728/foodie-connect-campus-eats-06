@@ -1,267 +1,242 @@
 
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { Button } from '@/components/ui/button';
-import { 
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Check } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
-import { 
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription
-} from '@/components/ui/dialog';
-import SubscriptionUpiPayment from '@/components/SubscriptionUpiPayment';
+import { useNavigate } from 'react-router-dom';
 import { StaffSubscriptionType } from '@/types';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Check, BadgeCheck, Clock } from 'lucide-react';
+import SubscriptionUpiPayment from '@/components/SubscriptionUpiPayment';
+import { toast } from '@/hooks/use-toast';
 
-const subscriptionPlans = [
+interface SubscriptionPlan {
+  id: StaffSubscriptionType;
+  title: string;
+  price: number;
+  duration: string;
+  features: string[];
+}
+
+const subscriptionPlans: SubscriptionPlan[] = [
   {
     id: 'monthly',
-    name: 'Monthly Plan',
-    price: 999,
-    period: 'month',
+    title: 'Monthly',
+    price: 249,
+    duration: '1 month',
     features: [
-      'Full access to order management system',
-      'Up to 100 orders per day',
+      'Access to order management system',
+      'Up to 100 orders per month',
       'Basic analytics',
       'Email support'
     ]
   },
   {
     id: 'quarterly',
-    name: 'Quarterly Plan',
-    price: 2499,
-    period: '3 months',
+    title: 'Quarterly',
+    price: 599,
+    duration: '3 months',
     features: [
-      'Full access to order management system',
-      'Unlimited orders per day',
-      'Advanced analytics and reporting',
-      'Priority email and phone support',
-      '24/7 technical assistance'
-    ],
-    popular: true
+      'Access to order management system',
+      'Up to 500 orders per month',
+      'Detailed analytics',
+      'Priority email support',
+      '10% discount on service fees'
+    ]
   },
   {
     id: 'yearly',
-    name: 'Annual Plan',
-    price: 8999,
-    period: 'year',
+    title: 'Yearly',
+    price: 1999,
+    duration: '12 months',
     features: [
-      'Full access to order management system',
-      'Unlimited orders per day',
-      'Advanced analytics and reporting',
-      'Priority email and phone support',
-      '24/7 technical assistance',
-      'Custom menu management features',
-      'Staff training sessions'
+      'Access to order management system',
+      'Unlimited orders',
+      'Advanced analytics',
+      'Priority phone support',
+      '20% discount on service fees',
+      'Dedicated account manager'
     ]
   }
 ];
 
 const Subscription: React.FC = () => {
-  const navigate = useNavigate();
   const { user } = useAuth();
-  const [hasSubscription, setHasSubscription] = React.useState(false);
-  const [subscriptionDetails, setSubscriptionDetails] = React.useState<any>(null);
-  const [paymentDialogOpen, setPaymentDialogOpen] = React.useState(false);
-  const [selectedPlan, setSelectedPlan] = React.useState<{
-    id: StaffSubscriptionType;
-    price: number;
-  } | null>(null);
+  const navigate = useNavigate();
+  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
+  const [showPayment, setShowPayment] = useState(false);
+  const [hasSubscription, setHasSubscription] = useState(false);
+  const [subscriptionDetails, setSubscriptionDetails] = useState<any>(null);
   
-  // Check if the canteen has an active subscription
-  React.useEffect(() => {
-    const subscribed = localStorage.getItem('canteen_staff_subscription') === 'true';
-    setHasSubscription(subscribed);
+  useEffect(() => {
+    // Check if user has an active subscription
+    const staffSubscription = localStorage.getItem('canteen_staff_subscription') === 'true';
+    const subscriptionData = localStorage.getItem('staff_subscription_details');
     
-    if (subscribed) {
-      const details = localStorage.getItem('staff_subscription_details');
-      if (details) {
-        setSubscriptionDetails(JSON.parse(details));
+    if (staffSubscription && subscriptionData) {
+      try {
+        const details = JSON.parse(subscriptionData);
+        setSubscriptionDetails(details);
+        setHasSubscription(true);
+      } catch (e) {
+        console.error('Error parsing subscription data:', e);
       }
     }
   }, []);
-
-  const handleSubscribe = (planId: StaffSubscriptionType, price: number) => {
-    // Set the selected plan and open payment dialog
-    setSelectedPlan({ id: planId, price });
-    setPaymentDialogOpen(true);
-  };
-
-  const handlePaymentSuccess = () => {
-    setPaymentDialogOpen(false);
-    setHasSubscription(true);
-    navigate('/staff');
-  };
-
-  const handleCancelSubscription = () => {
-    // In a real app, this would communicate with your payment processor to cancel
-    localStorage.removeItem('canteen_staff_subscription');
-    localStorage.removeItem('staff_subscription_details');
-    setHasSubscription(false);
-    setSubscriptionDetails(null);
-    
-    toast({
-      title: "Subscription cancelled",
-      description: "Your subscription has been cancelled.",
-    });
-  };
-
-  // Only staff members should access this page
-  React.useEffect(() => {
+  
+  // Redirect non-staff users
+  useEffect(() => {
     if (user && user.role !== 'staff') {
       navigate('/dashboard');
       toast({
         variant: "destructive",
         title: "Access denied",
-        description: "This page is only available for canteen staff.",
+        description: "This page is only for canteen staff.",
       });
     }
   }, [user, navigate]);
-
-  // Format subscription dates for display
+  
+  const handleSelectPlan = (plan: SubscriptionPlan) => {
+    setSelectedPlan(plan);
+    setShowPayment(true);
+  };
+  
+  const handlePaymentSuccess = () => {
+    setHasSubscription(true);
+    
+    toast({
+      title: "Subscription activated",
+      description: "Thank you for subscribing to CanteenConnect!",
+    });
+    
+    // Reload subscription details
+    const subscriptionData = localStorage.getItem('staff_subscription_details');
+    if (subscriptionData) {
+      try {
+        const details = JSON.parse(subscriptionData);
+        setSubscriptionDetails(details);
+      } catch (e) {
+        console.error('Error parsing subscription data:', e);
+      }
+    }
+    
+    // Hide payment section
+    setShowPayment(false);
+  };
+  
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-IN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   };
-
+  
   return (
-    <div className="container max-w-6xl mx-auto px-4 py-6">
+    <div className="container max-w-6xl mx-auto px-4 py-8">
       <div className="flex justify-start mb-6">
-        <Button variant="ghost" onClick={() => navigate('/staff')}>
+        <Button variant="ghost" onClick={() => navigate(-1)}>
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Dashboard
+          Back
         </Button>
       </div>
-
+      
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold mb-2">Canteen Management Platform Subscription</h1>
-        <p className="text-gray-500 max-w-2xl mx-auto">
-          Subscribe to our platform and enjoy benefits like unlimited orders, advanced analytics, 
-          and premium support for your canteen business.
+        <h1 className="text-3xl font-bold">CanteenConnect for Staff</h1>
+        <p className="text-gray-500 mt-2">
+          Subscribe to our platform to streamline your canteen operations
         </p>
       </div>
-
+      
       {hasSubscription ? (
-        <div className="max-w-md mx-auto bg-green-50 border border-green-100 rounded-lg p-6 text-center mb-8">
-          <div className="mb-4 mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-            <Check className="h-8 w-8 text-green-600" />
-          </div>
-          <h2 className="text-xl font-semibold mb-2">Active Subscription</h2>
-          
-          {subscriptionDetails && (
-            <div className="mb-4 text-left">
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="text-gray-500">Plan:</div>
-                <div className="font-medium capitalize">{subscriptionDetails.type}</div>
-                
-                <div className="text-gray-500">Start Date:</div>
-                <div>{formatDate(subscriptionDetails.startDate)}</div>
-                
-                <div className="text-gray-500">Renewal Date:</div>
-                <div>{formatDate(subscriptionDetails.endDate)}</div>
+        <Card className="mb-8 border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <BadgeCheck className="mr-2 text-green-600" />
+              Active Subscription
+            </CardTitle>
+            <CardDescription>
+              Your subscription is currently active
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Plan:</span>
+                <span className="capitalize">{subscriptionDetails?.type} Plan</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Start Date:</span>
+                <span>{subscriptionDetails ? formatDate(subscriptionDetails.startDate) : '-'}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Expiry Date:</span>
+                <span>{subscriptionDetails ? formatDate(subscriptionDetails.endDate) : '-'}</span>
               </div>
             </div>
-          )}
-          
-          <p className="text-gray-600 mb-4">
-            Your canteen is currently subscribed to our platform. You have full access to all features.
-          </p>
-          <Button 
-            variant="outline" 
-            onClick={handleCancelSubscription}
-            className="border-red-300 text-red-600 hover:bg-red-50"
-          >
-            Cancel Subscription
-          </Button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {subscriptionPlans.map(plan => (
-            <Card 
-              key={plan.id} 
-              className={`relative overflow-hidden ${plan.popular ? 'border-canteen-orange shadow-lg' : ''}`}
-            >
-              {plan.popular && (
-                <div className="absolute top-0 right-0">
-                  <Badge className="bg-canteen-orange text-white m-2">
-                    Most Popular
-                  </Badge>
-                </div>
-              )}
-              
+          </CardContent>
+        </Card>
+      ) : null}
+      
+      {!hasSubscription || !showPayment ? (
+        <div className="grid gap-8 md:grid-cols-3 mt-8">
+          {subscriptionPlans.map((plan) => (
+            <Card key={plan.id} className={selectedPlan?.id === plan.id ? 'border-2 border-canteen-orange' : ''}>
               <CardHeader>
-                <CardTitle>{plan.name}</CardTitle>
-                <CardDescription>For canteen business management</CardDescription>
-                <div className="mt-2">
-                  <span className="text-3xl font-bold">₹{plan.price}</span>
-                  <span className="text-gray-500">/{plan.period}</span>
-                </div>
+                <CardTitle>{plan.title}</CardTitle>
+                <CardDescription>{plan.duration}</CardDescription>
               </CardHeader>
-              
               <CardContent>
+                <div className="text-3xl font-bold mb-6">
+                  ₹{plan.price}
+                  <span className="text-sm text-gray-500 font-normal">/{plan.duration}</span>
+                </div>
                 <ul className="space-y-2">
                   {plan.features.map((feature, index) => (
                     <li key={index} className="flex items-start">
-                      <Check className="h-5 w-5 text-canteen-green mr-2 flex-shrink-0" />
+                      <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
                       <span className="text-sm">{feature}</span>
                     </li>
                   ))}
                 </ul>
               </CardContent>
-              
               <CardFooter>
-                <Button 
-                  onClick={() => handleSubscribe(plan.id as StaffSubscriptionType, plan.price)} 
-                  className={`w-full ${plan.popular ? 'bg-canteen-orange hover:bg-canteen-orange/90' : ''}`}
-                >
-                  Subscribe Now
+                <Button onClick={() => handleSelectPlan(plan)} className="w-full">
+                  {hasSubscription ? 'Change Plan' : 'Subscribe Now'}
                 </Button>
               </CardFooter>
             </Card>
           ))}
         </div>
+      ) : (
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle>Complete Your Subscription</CardTitle>
+                <CardDescription>
+                  {selectedPlan?.title} Plan - ₹{selectedPlan?.price}
+                </CardDescription>
+              </div>
+              <Button variant="ghost" onClick={() => setShowPayment(false)}>
+                Change Plan
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {selectedPlan && (
+              <SubscriptionUpiPayment
+                planId={selectedPlan.id}
+                planPrice={selectedPlan.price}
+                onSuccess={handlePaymentSuccess}
+              />
+            )}
+          </CardContent>
+        </Card>
       )}
-
-      <div className="max-w-2xl mx-auto mt-12 text-center text-sm text-gray-500">
-        <p>
-          Subscription automatically renews at the end of your billing period unless cancelled. 
-          You can cancel anytime. For multi-branch subscriptions or custom plans, please contact our sales team.
-        </p>
-      </div>
-
-      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Complete Your Subscription</DialogTitle>
-            <DialogDescription>
-              Pay using UPI to activate your subscription
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedPlan && (
-            <SubscriptionUpiPayment 
-              planId={selectedPlan.id}
-              planPrice={selectedPlan.price}
-              onSuccess={handlePaymentSuccess}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

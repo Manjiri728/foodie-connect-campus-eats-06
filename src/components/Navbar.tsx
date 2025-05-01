@@ -4,13 +4,22 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, User, LogOut, Menu } from 'lucide-react';
+import { ShoppingBag, User, LogOut, Menu, BadgeDollarSign } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
   const { totalItems } = useCart();
   const location = useLocation();
+  const [hasSubscription, setHasSubscription] = React.useState(false);
+  
+  // Check if staff has subscription
+  React.useEffect(() => {
+    if (user && user.role === 'staff') {
+      const staffSubscription = localStorage.getItem('canteen_staff_subscription') === 'true';
+      setHasSubscription(staffSubscription);
+    }
+  }, [user]);
 
   // Don't show navbar on login page
   if (location.pathname === '/') {
@@ -55,6 +64,17 @@ const Navbar: React.FC = () => {
                 <Link to="/orders" className="w-full hover:text-canteen-orange">
                   My Orders
                 </Link>
+                {user?.role === 'staff' && (
+                  <>
+                    <Link to="/staff" className="w-full hover:text-canteen-orange">
+                      Staff Dashboard
+                    </Link>
+                    <Link to="/subscription" className="w-full hover:text-canteen-orange flex items-center">
+                      <BadgeDollarSign className="w-4 h-4 mr-2" />
+                      {hasSubscription ? "Manage Subscription" : "Subscribe"}
+                    </Link>
+                  </>
+                )}
                 <button 
                   onClick={logout} 
                   className="flex items-center space-x-2 hover:text-canteen-orange mt-auto"
@@ -75,6 +95,17 @@ const Navbar: React.FC = () => {
           <Link to="/orders" className="hover:text-canteen-orange">
             My Orders
           </Link>
+          {user?.role === 'staff' && (
+            <>
+              <Link to="/staff" className="hover:text-canteen-orange">
+                Staff Dashboard
+              </Link>
+              <Link to="/subscription" className="hover:text-canteen-orange flex items-center">
+                <BadgeDollarSign className="w-4 h-4 mr-2" />
+                {hasSubscription ? "Manage Subscription" : "Subscribe"}
+              </Link>
+            </>
+          )}
           <Link to="/cart" className="relative">
             <ShoppingBag className="w-6 h-6" />
             {totalItems > 0 && (

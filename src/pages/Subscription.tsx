@@ -14,6 +14,15 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Check } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription
+} from '@/components/ui/dialog';
+import SubscriptionUpiPayment from '@/components/SubscriptionUpiPayment';
+import { StaffSubscriptionType } from '@/types';
 
 const subscriptionPlans = [
   {
@@ -63,31 +72,44 @@ const Subscription: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [hasSubscription, setHasSubscription] = React.useState(false);
+  const [subscriptionDetails, setSubscriptionDetails] = React.useState<any>(null);
+  const [paymentDialogOpen, setPaymentDialogOpen] = React.useState(false);
+  const [selectedPlan, setSelectedPlan] = React.useState<{
+    id: StaffSubscriptionType;
+    price: number;
+  } | null>(null);
   
   // Check if the canteen has an active subscription
   React.useEffect(() => {
     const subscribed = localStorage.getItem('canteen_staff_subscription') === 'true';
     setHasSubscription(subscribed);
+    
+    if (subscribed) {
+      const details = localStorage.getItem('staff_subscription_details');
+      if (details) {
+        setSubscriptionDetails(JSON.parse(details));
+      }
+    }
   }, []);
 
-  const handleSubscribe = (planId: string) => {
-    // In a real app, this would initiate a payment flow for subscription
-    // For demonstration purposes, we'll just set the subscription state to true
-    localStorage.setItem('canteen_staff_subscription', 'true');
+  const handleSubscribe = (planId: StaffSubscriptionType, price: number) => {
+    // Set the selected plan and open payment dialog
+    setSelectedPlan({ id: planId, price });
+    setPaymentDialogOpen(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    setPaymentDialogOpen(false);
     setHasSubscription(true);
-    
-    toast({
-      title: "Subscription activated!",
-      description: "Your canteen has successfully subscribed to our platform.",
-    });
-    
     navigate('/staff');
   };
 
   const handleCancelSubscription = () => {
     // In a real app, this would communicate with your payment processor to cancel
     localStorage.removeItem('canteen_staff_subscription');
+    localStorage.removeItem('staff_subscription_details');
     setHasSubscription(false);
+    setSubscriptionDetails(null);
     
     toast({
       title: "Subscription cancelled",
@@ -106,6 +128,16 @@ const Subscription: React.FC = () => {
       });
     }
   }, [user, navigate]);
+
+  // Format subscription dates for display
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
 
   return (
     <div className="container max-w-6xl mx-auto px-4 py-6">
@@ -130,6 +162,22 @@ const Subscription: React.FC = () => {
             <Check className="h-8 w-8 text-green-600" />
           </div>
           <h2 className="text-xl font-semibold mb-2">Active Subscription</h2>
+          
+          {subscriptionDetails && (
+            <div className="mb-4 text-left">
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="text-gray-500">Plan:</div>
+                <div className="font-medium capitalize">{subscriptionDetails.type}</div>
+                
+                <div className="text-gray-500">Start Date:</div>
+                <div>{formatDate(subscriptionDetails.startDate)}</div>
+                
+                <div className="text-gray-500">Renewal Date:</div>
+                <div>{formatDate(subscriptionDetails.endDate)}</div>
+              </div>
+            </div>
+          )}
+          
           <p className="text-gray-600 mb-4">
             Your canteen is currently subscribed to our platform. You have full access to all features.
           </p>
@@ -178,7 +226,7 @@ const Subscription: React.FC = () => {
               
               <CardFooter>
                 <Button 
-                  onClick={() => handleSubscribe(plan.id)} 
+                  onClick={() => handleSubscribe(plan.id as StaffSubscriptionType, plan.price)} 
                   className={`w-full ${plan.popular ? 'bg-canteen-orange hover:bg-canteen-orange/90' : ''}`}
                 >
                   Subscribe Now
@@ -195,6 +243,25 @@ const Subscription: React.FC = () => {
           You can cancel anytime. For multi-branch subscriptions or custom plans, please contact our sales team.
         </p>
       </div>
+
+      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Complete Your Subscription</DialogTitle>
+            <DialogDescription>
+              Pay using UPI to activate your subscription
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedPlan && (
+            <SubscriptionUpiPayment 
+              planId={selectedPlan.id}
+              planPrice={selectedPlan.price}
+              onSuccess={handlePaymentSuccess}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

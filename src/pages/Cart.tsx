@@ -151,7 +151,7 @@ const Cart: React.FC = () => {
           <div className="mt-4 text-center p-4 mt-6 bg-white border rounded-xl shadow-md">
             <h2 className="text-xl font-semibold mb-2">Scan to Pay via Google Pay</h2>
             <img
-              src="/upi-qr-code.png"
+              src="/file:///C:/Users/ASUS/Downloads/upi-qr-code.png"
               alt="Google Pay QR Code"
               className="mx-auto w-48 h-48 mb-3"
             />

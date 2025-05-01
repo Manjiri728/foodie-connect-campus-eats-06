@@ -151,11 +151,11 @@ const Cart: React.FC = () => {
           <div className="mt-4 text-center p-4 mt-6 bg-white border rounded-xl shadow-md">
             <h2 className="text-xl font-semibold mb-2">Scan to Pay via Google Pay</h2>
             <img
-              src="/google-pay-qr.png"
+              src="/file:///C:/Users/ASUS/Downloads/upi-qr-code.png"
               alt="Google Pay QR Code"
               className="mx-auto w-48 h-48 mb-3"
             />
-            <p className="text-sm text-gray-600">UPI ID: yourname@bank</p>
+            <p className="text-sm text-gray-600">UPI ID: manjirinandeshwar728@okhdfcbank</p>
             <a
               href="upi://pay?pa=yourname@bank&pn=Your Name&am=50&cu=INR"
               className="inline-block mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"

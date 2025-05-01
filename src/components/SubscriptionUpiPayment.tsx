@@ -1,14 +1,13 @@
-
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, QrCode, CreditCard } from 'lucide-react';
+import { Loader2, CreditCard, IndianRupee } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { StaffSubscriptionType } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from '@/integrations/supabase/client';
 
 const UPI_ID = "manjirinandeshwar728@okhdfcbank"; // Your specific UPI ID
 
@@ -26,9 +25,11 @@ const SubscriptionUpiPayment: React.FC<SubscriptionUpiPaymentProps> = ({
   const [utrReference, setUtrReference] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [activeTab, setActiveTab] = useState('scan');
-  const navigate = useNavigate();
+  
+  // QR code image (using the one you provided)
+  const qrCodeImage = "/upi-qr-code.png";
 
-  const handleVerifyPayment = () => {
+  const handleVerifyPayment = async () => {
     if (!utrReference.trim()) {
       toast({
         variant: "destructive",
@@ -40,17 +41,24 @@ const SubscriptionUpiPayment: React.FC<SubscriptionUpiPaymentProps> = ({
 
     setIsVerifying(true);
     
-    // Simulate payment verification
-    setTimeout(() => {
-      setIsVerifying(false);
+    try {
+      // Store subscription payment in Supabase
+      const { error } = await supabase
+        .from('subscription_payments')
+        .insert({
+          reference_id: utrReference,
+          plan_type: planId,
+          amount: planPrice,
+          payment_method: 'upi',
+          status: 'verified',
+          created_at: new Date().toISOString()
+        });
       
-      // In a real app, you would verify this with a backend API
-      toast({
-        title: "Subscription activated!",
-        description: "Your subscription payment has been verified successfully!",
-      });
+      if (error) {
+        throw new Error(error.message);
+      }
       
-      // Store subscription info in local storage for demo purposes
+      // Store subscription info
       const startDate = new Date();
       let endDate = new Date(startDate);
       
@@ -68,28 +76,54 @@ const SubscriptionUpiPayment: React.FC<SubscriptionUpiPaymentProps> = ({
       }
       
       const subscription = {
+        type: planId,
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString(),
+        active: true,
+      };
+      
+      // Store in Supabase
+      const { error: subscriptionError } = await supabase
+        .from('staff_subscriptions')
+        .insert(subscription);
+        
+      if (subscriptionError) {
+        throw new Error(subscriptionError.message);
+      }
+      
+      // Also keep local storage for immediate UI updates
+      localStorage.setItem('canteen_staff_subscription', 'true');
+      localStorage.setItem('staff_subscription_details', JSON.stringify({
         id: `sub-${Date.now()}`,
         type: planId,
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
         active: true,
-      };
+      }));
       
-      localStorage.setItem('canteen_staff_subscription', 'true');
-      localStorage.setItem('staff_subscription_details', JSON.stringify(subscription));
+      toast({
+        title: "Subscription activated!",
+        description: "Your subscription payment has been verified successfully!",
+      });
       
       // Callback to the parent component
       onSuccess();
-    }, 2000);
+    } catch (error) {
+      console.error('Error verifying subscription payment:', error);
+      toast({
+        variant: "destructive",
+        title: "Verification failed",
+        description: "There was a problem verifying your payment. Please try again.",
+      });
+    } finally {
+      setIsVerifying(false);
+    }
   };
-
-  // Generate a QR code URL
-  const qrCodeUrl = `https://chart.googleapis.com/chart?cht=qr&chl=upi://pay?pa=${UPI_ID}&pn=CanteenConnect&am=${planPrice.toFixed(2)}&cu=INR&tn=Subscription%20Payment&size=150x150`;
   
   // Generate direct payment links for popular UPI apps
   const googlePayLink = `upi://pay?pa=${UPI_ID}&pn=CanteenConnect&am=${planPrice.toFixed(2)}&cu=INR&tn=Subscription%20Payment`;
-  const phonepeLink = `phonepe://pay?pa=${UPI_ID}&pn=CanteenConnect&am=${planPrice.toFixed(2)}&cu=INR&tn=Subscription%20Payment`;
-  const paytmLink = `paytmmp://pay?pa=${UPI_ID}&pn=CanteenConnect&am=${planPrice.toFixed(2)}&cu=INR&tn=Subscription%20Payment`;
+  const phonepeLink = `upi://pay?pa=${UPI_ID}&pn=CanteenConnect&am=${planPrice.toFixed(2)}&cu=INR&tn=Subscription%20Payment`;
+  const paytmLink = `upi://pay?pa=${UPI_ID}&pn=CanteenConnect&am=${planPrice.toFixed(2)}&cu=INR&tn=Subscription%20Payment`;
   
   // Detect mobile device
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -107,7 +141,7 @@ const SubscriptionUpiPayment: React.FC<SubscriptionUpiPaymentProps> = ({
             <div className="flex flex-col items-center justify-center space-y-4">
               <Badge className="mb-2">Pay ₹{planPrice.toFixed(2)}</Badge>
               <img 
-                src={qrCodeUrl} 
+                src={qrCodeImage} 
                 alt="UPI Payment QR Code" 
                 className="w-48 h-48 border rounded-lg"
               />

@@ -48,7 +48,7 @@ export interface Order {
   createdAt: string;
   date: string;
   upiDetails?: UpiDetails;
-  paymentStatus?: 'pending' | 'completed';
+  paymentStatus?: 'pending' | 'completed' | 'failed';
 }
 
 export type StaffSubscriptionType = 'monthly' | 'quarterly' | 'yearly';
@@ -59,4 +59,34 @@ export interface StaffSubscription {
   startDate: string;
   endDate: string;
   active: boolean;
+}
+
+// Database table interfaces for Supabase
+export interface PaymentVerification {
+  id: string;
+  reference_id: string;
+  amount: number;
+  payment_method: string;
+  status: 'pending' | 'verified' | 'failed';
+  created_at: string;
+}
+
+export interface SubscriptionPayment {
+  id: string;
+  reference_id: string;
+  plan_type: StaffSubscriptionType;
+  amount: number;
+  payment_method: string;
+  status: 'pending' | 'verified' | 'failed';
+  created_at: string;
+}
+
+export interface StaffSubscriptionRecord {
+  id: string;
+  staff_id: string;
+  type: StaffSubscriptionType;
+  start_date: string;
+  end_date: string;
+  active: boolean;
+  created_at: string;
 }

@@ -1,7 +1,8 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CartItem, FoodItem, TimeSlot, PaymentMethod, Order, UpiDetails } from '@/types';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/AuthContext';
 
 interface CartContextType {
   items: CartItem[];
@@ -41,6 +42,7 @@ const CART_STORAGE_KEY = 'canteen-connect-cart';
 const SERVICE_FEE_PERCENTAGE = 5; // 5% service fee
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
@@ -64,10 +66,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const upiVerified = localStorage.getItem('upi_payment_verified') === 'true';
     setIsUpiVerified(upiVerified);
     
-    // Check if user has subscription (for students - service fee waiver)
-    const subscribed = localStorage.getItem('canteen_subscription') === 'true';
-    setHasSubscription(subscribed);
-    
     // Listen for UPI payment verification events
     const handleUpiVerified = () => {
       setIsUpiVerified(true);
@@ -79,6 +77,58 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       window.removeEventListener('upi-payment-verified', handleUpiVerified);
     };
   }, []);
+
+  // Check subscription status when user changes
+  useEffect(() => {
+    const checkSubscription = async () => {
+      if (user && user.role === 'staff') {
+        // First check local storage for immediate UI updates
+        const subscribed = localStorage.getItem('canteen_subscription') === 'true';
+        if (subscribed) {
+          setHasSubscription(true);
+          return;
+        }
+        
+        // Then verify with Supabase
+        try {
+          const now = new Date().toISOString();
+          const { data, error } = await supabase
+            .from('staff_subscriptions')
+            .select('*')
+            .eq('staff_id', user.id)
+            .eq('active', true)
+            .gte('end_date', now)
+            .order('end_date', { ascending: false })
+            .limit(1);
+            
+          if (error) {
+            throw error;
+          }
+          
+          if (data && data.length > 0) {
+            setHasSubscription(true);
+            // Update localStorage for faster loading next time
+            localStorage.setItem('canteen_subscription', 'true');
+            localStorage.setItem('staff_subscription_details', JSON.stringify({
+              id: data[0].id,
+              type: data[0].type,
+              startDate: data[0].start_date,
+              endDate: data[0].end_date,
+              active: data[0].active,
+            }));
+          } else {
+            setHasSubscription(false);
+            localStorage.removeItem('canteen_subscription');
+            localStorage.removeItem('staff_subscription_details');
+          }
+        } catch (error) {
+          console.error('Error checking subscription:', error);
+        }
+      }
+    };
+    
+    checkSubscription();
+  }, [user]);
 
   useEffect(() => {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
@@ -190,12 +240,36 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Create order in Supabase
+      const newOrder = {
+        user_id: user?.id || 'guest',
+        items: JSON.stringify(items),
+        total: total,
+        subtotal: subtotal,
+        service_fee: serviceFee,
+        status: 'placed',
+        time_slot: JSON.stringify(selectedTimeSlot),
+        payment_method: paymentMethod,
+        created_at: new Date().toISOString(),
+        date: new Date().toISOString().split('T')[0],
+        upi_details: paymentMethod === 'upi' ? JSON.stringify(upiDetails) : null,
+        payment_status: 'completed',
+      };
       
-      const newOrder: Order = {
-        id: `ORDER-${Math.floor(Math.random() * 10000)}`,
-        userId: '1', // In a real app, this would come from the auth context
+      const { data, error } = await supabase
+        .from('orders')
+        .insert(newOrder)
+        .select()
+        .single();
+        
+      if (error) {
+        throw error;
+      }
+      
+      // Create order object for state
+      const orderObj: Order = {
+        id: data.id,
+        userId: data.user_id,
         items: [...items],
         total: total,
         subtotal: subtotal,
@@ -203,28 +277,28 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         status: 'placed',
         timeSlot: selectedTimeSlot,
         paymentMethod,
-        createdAt: new Date().toISOString(),
-        date: new Date().toISOString(),
+        createdAt: data.created_at,
+        date: data.date,
         upiDetails: paymentMethod === 'upi' ? upiDetails : undefined,
         paymentStatus: 'completed',
       };
       
-      setCurrentOrder(newOrder);
+      setCurrentOrder(orderObj);
       clearCart();
       
       toast({
         title: "Order placed successfully",
-        description: `Your order ${newOrder.id} has been placed.`,
+        description: `Your order ${data.id} has been placed.`,
       });
       
-      return newOrder;
+      return orderObj;
     } catch (error) {
+      console.error('Error placing order:', error);
       toast({
         variant: "destructive",
         title: "Failed to place order",
         description: "Something went wrong. Please try again.",
       });
-      console.error('Error placing order:', error);
       return null;
     }
   };

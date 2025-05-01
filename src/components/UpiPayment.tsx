@@ -1,23 +1,26 @@
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, QrCode, IndianRupee } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
 
-const UPI_ID = "manjirinandeshwar728@okhdfcbank"; // Your specific UPI ID
+// Your specific UPI ID
+const UPI_ID = "manjirinandeshwar728@okhdfcbank"; 
 
 const UpiPayment: React.FC = () => {
-  const { subtotal, hasSubscription } = useCart();
+  const { subtotal, hasSubscription, setUpiDetails, setIsUpiVerified } = useCart();
   const [utrReference, setUtrReference] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
-  const navigate = useNavigate();
+  
+  // QR code image (using the one you provided)
+  const qrCodeImage = "/upi-qr-code.png"; 
 
-  const handleVerifyPayment = () => {
+  const handleVerifyPayment = async () => {
     if (!utrReference.trim()) {
       toast({
         variant: "destructive",
@@ -29,29 +32,60 @@ const UpiPayment: React.FC = () => {
 
     setIsVerifying(true);
     
-    // Simulate payment verification
-    setTimeout(() => {
-      setIsVerifying(false);
+    try {
+      // Here we would verify with Supabase in a production app
+      // For now, we'll simulate verification success
       
-      // In a real app, you would verify this with a backend API
-      // For demo purposes, we'll just accept any input as valid
+      // Store payment reference in Supabase
+      const { error } = await supabase
+        .from('payment_verifications')
+        .insert({
+          reference_id: utrReference,
+          amount: subtotal,
+          payment_method: 'upi',
+          status: 'verified',
+          created_at: new Date().toISOString()
+        });
+      
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+      // Update local state
+      setUpiDetails({
+        upiId: UPI_ID,
+        referenceId: utrReference,
+      });
+      
+      setIsUpiVerified(true);
+      localStorage.setItem('upi_payment_verified', 'true');
+      
       toast({
         title: "Payment verified",
         description: "Your UPI payment has been verified successfully!",
       });
-      
-      localStorage.setItem('upi_payment_verified', 'true');
       
       // Trigger any parent component callbacks if needed
       if (typeof window !== 'undefined') {
         const event = new CustomEvent('upi-payment-verified');
         window.dispatchEvent(event);
       }
-    }, 2000);
+    } catch (error) {
+      console.error('Error verifying payment:', error);
+      toast({
+        variant: "destructive",
+        title: "Verification failed",
+        description: "There was a problem verifying your payment. Please try again.",
+      });
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
-  // Generate a simple QR code URL (in a real app, use a proper QR code library)
-  const qrCodeUrl = `https://chart.googleapis.com/chart?cht=qr&chl=upi://pay?pa=${UPI_ID}&pn=CanteenConnect&am=${subtotal.toFixed(2)}&cu=INR&tn=Food%20Order%20Payment&size=150x150`;
+  // Generate direct payment links for popular UPI apps
+  const googlePayLink = `upi://pay?pa=${UPI_ID}&pn=CanteenConnect&am=${subtotal.toFixed(2)}&cu=INR&tn=Food%20Order%20Payment`;
+  const phonepeLink = `phonepe://pay?pa=${UPI_ID}&pn=CanteenConnect&am=${subtotal.toFixed(2)}&cu=INR&tn=Food%20Order%20Payment`;
+  const paytmLink = `paytmmp://pay?pa=${UPI_ID}&pn=CanteenConnect&am=${subtotal.toFixed(2)}&cu=INR&tn=Food%20Order%20Payment`;
 
   return (
     <div className="space-y-6">
@@ -59,7 +93,7 @@ const UpiPayment: React.FC = () => {
         <div className="flex flex-col items-center justify-center space-y-4">
           <Badge className="mb-2">Pay ₹{subtotal.toFixed(2)}</Badge>
           <img 
-            src={qrCodeUrl} 
+            src={qrCodeImage} 
             alt="UPI Payment QR Code" 
             className="w-48 h-48 border rounded-lg"
           />
@@ -82,6 +116,47 @@ const UpiPayment: React.FC = () => {
             <span className="font-medium">₹{subtotal.toFixed(2)}</span>
           </div>
         </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <Button
+          variant="outline"
+          className="flex flex-col h-auto py-3"
+          onClick={() => window.location.href = googlePayLink}
+        >
+          <img 
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Google_Pay_Logo_%282020%29.svg/512px-Google_Pay_Logo_%282020%29.svg.png" 
+            alt="Google Pay" 
+            className="h-6 mb-1" 
+          />
+          <span className="text-xs">Google Pay</span>
+        </Button>
+        
+        <Button
+          variant="outline"
+          className="flex flex-col h-auto py-3"
+          onClick={() => window.location.href = phonepeLink}
+        >
+          <img 
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/PhonePe_Logo.svg/512px-PhonePe_Logo.svg.png" 
+            alt="PhonePe" 
+            className="h-6 mb-1" 
+          />
+          <span className="text-xs">PhonePe</span>
+        </Button>
+        
+        <Button
+          variant="outline"
+          className="flex flex-col h-auto py-3"
+          onClick={() => window.location.href = paytmLink}
+        >
+          <img 
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Paytm_Logo_%282019%29.svg/512px-Paytm_Logo_%282019%29.svg.png" 
+            alt="Paytm" 
+            className="h-6 mb-1" 
+          />
+          <span className="text-xs">Paytm</span>
+        </Button>
       </div>
 
       <div className="bg-white rounded-lg p-4 border border-gray-200">
@@ -128,7 +203,7 @@ const UpiPayment: React.FC = () => {
             variant="outline" 
             size="sm" 
             className="w-full text-xs"
-            onClick={() => navigate('/subscription')}
+            onClick={() => window.location.href = '/subscription'}
           >
             View Subscription Plans
           </Button>

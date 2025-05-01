@@ -1,40 +1,32 @@
-// server/index.js
-const express = require("express");
-const nodemailer = require("nodemailer");
-const cors = require("cors");
-require("dotenv").config();
+const express = require('express');
+const http = require('http');
+const socketIO = require('socket.io');
+const cors = require('cors');
 
 const app = express();
-app.use(cors());
-app.use(express.json());
-
-app.post("/send-email", async (req, res) => {
-  const { email, name } = req.body;
-
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER, // your email
-      pass: process.env.EMAIL_PASS  // your email password or app password
-    },
-  });
-
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: "Welcome to Foodie Connect!",
-    text: `Hello ${name},\n\nThank you for signing up at Foodie Connect.\n\nRegards,\nTeam`,
-  };
-
-  try {
-    await transporter.sendMail(mailOptions);
-    res.status(200).send("Email sent successfully");
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("Failed to send email");
+const server = http.createServer(app);
+const io = socketIO(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
   }
 });
 
-app.listen(5000, () => {
-  console.log("Server running on http://localhost:5000");
+app.use(cors());
+app.use(express.json());
+
+// Sample POST route to simulate order
+app.post('/place-order', (req, res) => {
+  const orderDetails = req.body;
+  io.emit('newOrder', orderDetails); // Broadcast to all staff
+  res.status(201).json({ message: 'Order placed', order: orderDetails });
 });
+
+io.on('connection', (socket) => {
+  console.log('Staff connected:', socket.id);
+});
+
+server.listen(3000, () => {
+  console.log('Server running at http://localhost:3000');
+});
+

@@ -28,11 +28,11 @@ const subscriptionPlans: SubscriptionPlan[] = [
   {
     id: 'monthly',
     title: 'Monthly',
-    price: 249,
+    price: 1999,
     duration: '1 month',
     features: [
       'Access to order management system',
-      'Up to 100 orders per month',
+      'Up to 500 orders per month',
       'Basic analytics',
       'Email support'
     ]
@@ -40,7 +40,7 @@ const subscriptionPlans: SubscriptionPlan[] = [
   {
     id: 'quarterly',
     title: 'Quarterly',
-    price: 599,
+    price: 6999,
     duration: '3 months',
     features: [
       'Access to order management system',
@@ -53,7 +53,7 @@ const subscriptionPlans: SubscriptionPlan[] = [
   {
     id: 'yearly',
     title: 'Yearly',
-    price: 1999,
+    price: 9999,
     duration: '12 months',
     features: [
       'Access to order management system',

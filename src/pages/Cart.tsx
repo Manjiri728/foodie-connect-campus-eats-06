@@ -156,11 +156,12 @@ const Cart: React.FC = () => {
             />
             <p className="text-sm text-gray-600">UPI ID: manjirinandeshwar728@okhdfcbank</p>
             <a
-              href="upi://pay?pa=manjirinandeshwar728@okhdfcbank&pn=CanteenConnect&am=50&cu=INR"
-              className="inline-block mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Pay with Google Pay
-            </a>
+  href={`upi://pay?pa=manjirinandeshwar728@okhdfcbank&pn=CanteenConnect&am=${total.toFixed(2)}&cu=INR`}
+  className="inline-block mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+>
+  Pay ₹{total.toFixed(2)} with Google Pay
+</a>
+
           </div>
 
           {!hasSubscription && (

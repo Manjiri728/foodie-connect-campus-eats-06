@@ -8,7 +8,7 @@ import { toast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
-const UPI_ID = "yourname@upi"; // Replace with your actual UPI ID
+const UPI_ID = "manjirinandeshwar728@okhdfcbank"; // Your specific UPI ID
 
 const UpiPayment: React.FC = () => {
   const { subtotal } = useCart();

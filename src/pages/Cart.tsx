@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/context/CartContext';
@@ -156,30 +157,12 @@ const Cart: React.FC = () => {
             />
             <p className="text-sm text-gray-600">UPI ID: manjirinandeshwar728@okhdfcbank</p>
             <a
-  href={`upi://pay?pa=manjirinandeshwar728@okhdfcbank&pn=CanteenConnect&am=${total.toFixed(2)}&cu=INR`}
-  className="inline-block mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
->
-  Pay ₹{total.toFixed(2)} with Google Pay
-</a>
-
+              href={`upi://pay?pa=manjirinandeshwar728@okhdfcbank&pn=CanteenConnect&am=${total.toFixed(2)}&cu=INR`}
+              className="inline-block mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Pay ₹{total.toFixed(2)} with Google Pay
+            </a>
           </div>
-
-          {!hasSubscription && (
-            <div className="mt-4 p-4 bg-orange-50 border border-orange-100 rounded-lg">
-              <h3 className="text-sm font-medium mb-2">Save on Service Fees!</h3>
-              <p className="text-xs text-gray-600 mb-3">
-                Subscribe to our monthly plan and get service fees waived on all your orders.
-              </p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full text-xs"
-                onClick={() => navigate('/subscription')}
-              >
-                View Subscription Plans
-              </Button>
-            </div>
-          )}
         </div>
       </div>
     </div>

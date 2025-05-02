@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CartItem, FoodItem, TimeSlot, PaymentMethod, Order, UpiDetails } from '@/types';
 import { toast } from '@/hooks/use-toast';
@@ -89,41 +90,24 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return;
         }
         
-        // Then verify with Supabase
-        try {
-          const now = new Date().toISOString();
-          const { data, error } = await supabase
-            .from('staff_subscriptions')
-            .select('*')
-            .eq('staff_id', user.id)
-            .eq('active', true)
-            .gte('end_date', now)
-            .order('end_date', { ascending: false })
-            .limit(1);
+        // Check local storage for staff subscription details
+        const subscriptionData = localStorage.getItem('staff_subscription_details');
+        if (subscriptionData) {
+          try {
+            const details = JSON.parse(subscriptionData);
+            const endDate = new Date(details.endDate);
+            const now = new Date();
             
-          if (error) {
-            throw error;
+            if (endDate > now && details.active) {
+              setHasSubscription(true);
+              return;
+            }
+          } catch (e) {
+            console.error('Error parsing subscription data:', e);
           }
-          
-          if (data && data.length > 0) {
-            setHasSubscription(true);
-            // Update localStorage for faster loading next time
-            localStorage.setItem('canteen_subscription', 'true');
-            localStorage.setItem('staff_subscription_details', JSON.stringify({
-              id: data[0].id,
-              type: data[0].type,
-              startDate: data[0].start_date,
-              endDate: data[0].end_date,
-              active: data[0].active,
-            }));
-          } else {
-            setHasSubscription(false);
-            localStorage.removeItem('canteen_subscription');
-            localStorage.removeItem('staff_subscription_details');
-          }
-        } catch (error) {
-          console.error('Error checking subscription:', error);
         }
+        
+        setHasSubscription(false);
       }
     };
     
@@ -240,36 +224,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     try {
-      // Create order in Supabase
-      const newOrder = {
-        user_id: user?.id || 'guest',
-        items: JSON.stringify(items),
-        total: total,
-        subtotal: subtotal,
-        service_fee: serviceFee,
-        status: 'placed',
-        time_slot: JSON.stringify(selectedTimeSlot),
-        payment_method: paymentMethod,
-        created_at: new Date().toISOString(),
-        date: new Date().toISOString().split('T')[0],
-        upi_details: paymentMethod === 'upi' ? JSON.stringify(upiDetails) : null,
-        payment_status: 'completed',
-      };
-      
-      const { data, error } = await supabase
-        .from('orders')
-        .insert(newOrder)
-        .select()
-        .single();
-        
-      if (error) {
-        throw error;
-      }
+      // Generate a mock order ID
+      const orderId = `order-${Date.now()}`;
       
       // Create order object for state
       const orderObj: Order = {
-        id: data.id,
-        userId: data.user_id,
+        id: orderId,
+        userId: user?.id || 'guest',
         items: [...items],
         total: total,
         subtotal: subtotal,
@@ -277,18 +238,24 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         status: 'placed',
         timeSlot: selectedTimeSlot,
         paymentMethod,
-        createdAt: data.created_at,
-        date: data.date,
+        createdAt: new Date().toISOString(),
+        date: new Date().toISOString().split('T')[0],
         upiDetails: paymentMethod === 'upi' ? upiDetails : undefined,
         paymentStatus: 'completed',
       };
+      
+      // Save to local storage for simple persistence
+      const existingOrders = localStorage.getItem('canteen_orders');
+      const orders = existingOrders ? JSON.parse(existingOrders) : [];
+      orders.push(orderObj);
+      localStorage.setItem('canteen_orders', JSON.stringify(orders));
       
       setCurrentOrder(orderObj);
       clearCart();
       
       toast({
         title: "Order placed successfully",
-        description: `Your order ${data.id} has been placed.`,
+        description: `Your order ${orderId} has been placed.`,
       });
       
       return orderObj;

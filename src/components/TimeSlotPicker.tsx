@@ -38,6 +38,12 @@ const availableTimeSlots: TimeSlot[] = [
   { id: '28', time: '3:45 PM - 4:00 PM', availableSlots: 10 },
   { id: '29', time: '4:00 PM - 4:15 PM', availableSlots: 8 },
   { id: '30', time: '4:15 PM - 4:30 PM', availableSlots: 8 },
+  { id: '31', time: '4:30 PM - 4:45 PM', availableSlots: 12 },
+  { id: '32', time: '4:45 PM - 5:00 PM', availableSlots: 15 },
+  { id: '33', time: '5:00 PM - 5:15 PM', availableSlots: 15 },
+  { id: '34', time: '5:15 PM - 5:30 PM', availableSlots: 12 },
+  { id: '35', time: '5:30 PM - 5:45 PM', availableSlots: 10 },
+  { id: '36', time: '5:45 PM - 6:00 PM', availableSlots: 8 },
 ];
 
 const TimeSlotPicker: React.FC = () => {

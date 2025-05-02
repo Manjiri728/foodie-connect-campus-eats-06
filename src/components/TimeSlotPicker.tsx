@@ -6,14 +6,22 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Clock } from 'lucide-react';
 
-// Sample time slots
+// Extended time slots with more options
 const availableTimeSlots: TimeSlot[] = [
-  { id: '1', time: '12:00 PM - 12:15 PM', availableSlots: 10 },
-  { id: '2', time: '12:15 PM - 12:30 PM', availableSlots: 8 },
-  { id: '3', time: '12:30 PM - 12:45 PM', availableSlots: 5 },
-  { id: '4', time: '12:45 PM - 1:00 PM', availableSlots: 12 },
-  { id: '5', time: '1:00 PM - 1:15 PM', availableSlots: 15 },
-  { id: '6', time: '1:15 PM - 1:30 PM', availableSlots: 7 },
+  { id: '1', time: '11:00 AM - 11:15 AM', availableSlots: 10 },
+  { id: '2', time: '11:15 AM - 11:30 AM', availableSlots: 8 },
+  { id: '3', time: '11:30 AM - 11:45 AM', availableSlots: 12 },
+  { id: '4', time: '11:45 AM - 12:00 PM', availableSlots: 15 },
+  { id: '5', time: '12:00 PM - 12:15 PM', availableSlots: 10 },
+  { id: '6', time: '12:15 PM - 12:30 PM', availableSlots: 8 },
+  { id: '7', time: '12:30 PM - 12:45 PM', availableSlots: 5 },
+  { id: '8', time: '12:45 PM - 1:00 PM', availableSlots: 12 },
+  { id: '9', time: '1:00 PM - 1:15 PM', availableSlots: 15 },
+  { id: '10', time: '1:15 PM - 1:30 PM', availableSlots: 7 },
+  { id: '11', time: '1:30 PM - 1:45 PM', availableSlots: 9 },
+  { id: '12', time: '1:45 PM - 2:00 PM', availableSlots: 11 },
+  { id: '13', time: '2:00 PM - 2:15 PM', availableSlots: 6 },
+  { id: '14', time: '2:15 PM - 2:30 PM', availableSlots: 8 },
 ];
 
 const TimeSlotPicker: React.FC = () => {
